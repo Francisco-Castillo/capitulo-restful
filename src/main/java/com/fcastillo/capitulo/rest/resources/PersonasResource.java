@@ -7,9 +7,12 @@ package com.fcastillo.capitulo.rest.resources;
 
 import com.fcastillo.capitulo.rest.ejb.PersonasFacadeLocal;
 import com.fcastillo.capitulo.rest.entity.Personas;
+import com.fcastillo.capitulo.rest.excepciones.ConflictException;
 import com.fcastillo.capitulo.rest.excepciones.ErrorMessage;
 import com.fcastillo.capitulo.rest.excepciones.NotFoundException;
-import java.math.BigDecimal;
+import com.fcastillo.capitulo.rest.modelo.PersonaForm;
+import com.fcastillo.capitulo.rest.utilidades.Utilidades;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -21,6 +24,7 @@ import javax.json.JsonObjectBuilder;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
+import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
@@ -39,6 +43,40 @@ public class PersonasResource {
 
     @EJB
     PersonasFacadeLocal personaEJB;
+
+    @POST
+    @Path("/crear")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response crear(PersonaForm personaForm) {
+
+        Personas persona = personaEJB.findByDocumento(personaForm.getNdocumento());
+        if (persona != null) {
+            ErrorMessage em = new ErrorMessage(
+                    Response.Status.CONFLICT, Response.Status.CONFLICT.getStatusCode(),
+                    "Ya se encuentra registrada una persona con el dni " + personaForm.getNdocumento()
+            );
+            throw new ConflictException(em);
+        }
+
+        // seteamos los valores
+        persona = new Personas();
+        persona.setApellido(personaForm.getApellido());
+        persona.setNombre(personaForm.getNombre());
+        persona.setNdocumento(personaForm.getNdocumento());
+        persona.setFnacimiento(Utilidades.stringToDate(personaForm.getFnacimiento()));
+        persona.setSexo(personaForm.getSexo());
+        persona.setEmail(personaForm.getEmail());
+        persona.setTelefono(personaForm.getTelefono());
+        persona.setImagen(personaForm.getImagen());
+
+        personaEJB.create(persona);
+        JsonObjectBuilder respuesta = Json.createObjectBuilder().add("mensaje",
+                Json.createObjectBuilder().add("titulo", "¡Buen trabajo!")
+                        .add("descripcion", "Se registró exitosamente a "
+                                + personaForm.getApellido().concat(", ").concat(personaForm.getNombre())));
+        return Response.status(Response.Status.CREATED).entity(respuesta.build()).build();
+    }
 
     @GET
     @Path("/getlista")
@@ -98,21 +136,21 @@ public class PersonasResource {
     public Response eliminar(@PathParam("id") int id) {
         // Buscamos a la persona
         Personas persona = personaEJB.find(id);
-        
+
         // Si la persona buscada no existe retornamos una excepcion
         if (persona == null) {
             ErrorMessage em = new ErrorMessage(Response.Status.NOT_FOUND, Response.Status.NOT_FOUND.getStatusCode(), "No se encontró a la persona con el id " + id);
             throw new NotFoundException(em);
         }
-        
+
         // Eliminamos
         personaEJB.remove(persona);
-        
+
         // Construimos la respuesta
         JsonObjectBuilder respuesta = Json.createObjectBuilder()
                 .add("status", Json.createObjectBuilder()
                         .add("statusCode", Response.Status.OK.getStatusCode())
-                        .add("mensaje", "Se eliminó correctamente a "+persona.getApellidoNombre()));
+                        .add("mensaje", "Se eliminó correctamente a " + persona.getApellidoNombre()));
         return Response.status(Response.Status.OK).entity(respuesta.build()).build();
     }
 
