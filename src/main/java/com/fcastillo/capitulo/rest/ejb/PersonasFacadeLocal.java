@@ -25,6 +25,8 @@ public interface PersonasFacadeLocal {
 
     Personas find(Object id);
 
+    Personas findByDocumento(String numeroDocumento);
+
     List<Personas> findAll();
 
     List<Personas> findRange(int[] range);

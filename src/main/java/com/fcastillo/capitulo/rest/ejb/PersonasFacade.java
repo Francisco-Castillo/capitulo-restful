@@ -68,4 +68,16 @@ public class PersonasFacade extends AbstractFacade<Personas> implements Personas
 
     }
 
+    @Override
+    public Personas findByDocumento(String numeroDocumento) {
+        String consulta = "FROM Personas p WHERE p.ndocumento=?1";
+        Personas persona = null;
+        TypedQuery<Personas> query = em.createQuery(consulta, Personas.class);
+        query.setParameter(1, numeroDocumento);
+        if (!query.getResultList().isEmpty()) {
+            persona = query.getResultList().get(0);
+        }
+        return persona;
+    }
+
 }
