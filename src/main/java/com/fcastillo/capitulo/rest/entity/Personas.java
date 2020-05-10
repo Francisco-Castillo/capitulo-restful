@@ -20,6 +20,7 @@ import javax.persistence.OneToOne;
 import javax.persistence.Table;
 import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
+import javax.persistence.Transient;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import javax.xml.bind.annotation.XmlRootElement;
@@ -86,6 +87,8 @@ public class Personas implements Serializable {
     private Clientes clientes;
     @OneToOne(cascade = CascadeType.ALL, mappedBy = "personas")
     private Usuarios usuarios;
+    @Transient
+    private String apellidoNombre;
 
     public Personas() {
     }
@@ -214,5 +217,13 @@ public class Personas implements Serializable {
     public String toString() {
         return "com.fcastillo.capitulo.rest.entity.Personas[ id=" + id + " ]";
     }
-    
+
+    public String getApellidoNombre() {
+        return apellido.concat(", ").concat(nombre);
+    }
+
+    public void setApellidoNombre(String apellidoNombre) {
+        this.apellidoNombre = apellidoNombre;
+    }
+
 }
