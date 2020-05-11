@@ -124,7 +124,7 @@ public class PersonasResource {
 
         // Construimos la respuesta
         respuesta.add("status", Json.createObjectBuilder()
-                .add("statusCode", 200))
+                .add("statusCode", Response.Status.OK.getStatusCode()))
                 .add("totalRows", personaEJB.count())
                 .add("personas", jab);
 
