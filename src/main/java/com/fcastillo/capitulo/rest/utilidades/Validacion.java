@@ -15,7 +15,7 @@ public class Validacion {
      * @return
      */
     public static <T> T defaultValue(T value, T defaultValue) {
-        return value == null ? defaultValue : value;
+        return value == null || value.equals("") ? defaultValue : value;
     }
 
 }
