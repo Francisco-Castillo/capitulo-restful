@@ -268,7 +268,7 @@ public class Utilidades {
     }
 
     public static Date stringToDate(String fechaString) {
-        SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm");
+        SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd");
 
         Date fecha = null;
         try {
