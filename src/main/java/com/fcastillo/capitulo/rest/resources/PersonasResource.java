@@ -105,8 +105,10 @@ public class PersonasResource {
         List<Personas> lstPersonas = personaEJB.findByParams(start, size, sortBy, sortOrder, map);
 
         if (lstPersonas.isEmpty()) {
-
+            ErrorMessage em = new ErrorMessage(Response.Status.NOT_FOUND, Response.Status.NOT_FOUND.getStatusCode(), "No se encontraron registros");
+            throw new NotFoundException(em);
         }
+        
         // Recorremos el listado de personas y construimos el arreglo JSON
         lstPersonas.stream().forEach(x -> {
             jab.add(Json.createObjectBuilder()
@@ -114,7 +116,7 @@ public class PersonasResource {
                     .add("apellido", x.getApellido())
                     .add("nombre", x.getNombre())
                     .add("documento", x.getNdocumento())
-                    .add("fnacimiento", x.getFnacimiento().toString())
+                    .add("fnacimiento", Utilidades.ISO8601(x.getFnacimiento()))
                     .add("sexo", x.getSexo())
                     .add("email", x.getEmail())
                     .add("telefono", x.getTelefono()));
