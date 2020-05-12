@@ -12,6 +12,7 @@ import com.fcastillo.capitulo.rest.excepciones.ErrorMessage;
 import com.fcastillo.capitulo.rest.excepciones.NotFoundException;
 import com.fcastillo.capitulo.rest.modelo.PersonaForm;
 import com.fcastillo.capitulo.rest.utilidades.Utilidades;
+import com.fcastillo.capitulo.rest.utilidades.Validacion;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -25,6 +26,7 @@ import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
@@ -108,7 +110,7 @@ public class PersonasResource {
             ErrorMessage em = new ErrorMessage(Response.Status.NOT_FOUND, Response.Status.NOT_FOUND.getStatusCode(), "No se encontraron registros");
             throw new NotFoundException(em);
         }
-        
+
         // Recorremos el listado de personas y construimos el arreglo JSON
         lstPersonas.stream().forEach(x -> {
             jab.add(Json.createObjectBuilder()
@@ -154,6 +156,38 @@ public class PersonasResource {
                         .add("statusCode", Response.Status.OK.getStatusCode())
                         .add("mensaje", "Se eliminó correctamente a " + persona.getApellidoNombre()));
         return Response.status(Response.Status.OK).entity(respuesta.build()).build();
+    }
+
+    @PUT
+    @Path("/cambiar")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response actualizar(PersonaForm personaForm) {
+        Personas persona = personaEJB.findByDocumento(personaForm.getNdocumento());
+
+        if (persona == null) {
+            ErrorMessage em = new ErrorMessage(Response.Status.NOT_FOUND,
+                    Response.Status.NOT_FOUND.getStatusCode(), "No se encontro la persona");
+            throw new NotFoundException(em);
+        }
+        persona.setApellido(Validacion.defaultValue(personaForm.getApellido(), persona.getApellido()));
+        persona.setNombre(Validacion.defaultValue(personaForm.getNombre(), persona.getNombre()));
+        persona.setNdocumento(Validacion.defaultValue(personaForm.getNdocumento(), persona.getNdocumento()));
+        persona.setFnacimiento(Validacion.defaultValue(Utilidades.stringToDate(personaForm.getFnacimiento()), persona.getFnacimiento()));
+        persona.setSexo(Validacion.defaultValue(personaForm.getSexo(), persona.getSexo()));
+        persona.setEmail(Validacion.defaultValue(personaForm.getEmail(), persona.getEmail()));
+        persona.setTelefono(Validacion.defaultValue(personaForm.getTelefono(), persona.getTelefono()));
+        persona.setImagen(Validacion.defaultValue(personaForm.getImagen(), persona.getImagen()));
+
+        personaEJB.edit(persona);
+
+        JsonObjectBuilder job = Json.createObjectBuilder().add("mensaje",
+                Json.createObjectBuilder()
+                        .add("titulo", "¡Buen trabajo!")
+                        .add("descripcion", "Los datos de la persona con id "
+                                + persona.getId()
+                                + " se actualizaron correctamente"));
+        return Response.status(Response.Status.OK).entity(job.build()).build();
     }
 
 }
