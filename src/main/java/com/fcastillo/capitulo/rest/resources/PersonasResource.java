@@ -13,7 +13,13 @@ import com.fcastillo.capitulo.rest.excepciones.NotFoundException;
 import com.fcastillo.capitulo.rest.modelo.PersonaForm;
 import com.fcastillo.capitulo.rest.utilidades.Utilidades;
 import com.fcastillo.capitulo.rest.utilidades.Validacion;
-import java.util.Date;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiImplicitParam;
+import io.swagger.annotations.ApiImplicitParams;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
+import io.swagger.annotations.ApiResponse;
+import io.swagger.annotations.ApiResponses;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -39,7 +45,8 @@ import javax.ws.rs.core.UriInfo;
  *
  * @author fcastillo
  */
-@Path("personas")
+@Path("/personas")
+@Api(value = "personas")
 @RequestScoped
 public class PersonasResource {
 
@@ -50,7 +57,13 @@ public class PersonasResource {
     @Path("/crear")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public Response crear(PersonaForm personaForm) {
+    @ApiOperation(value = "Insertar una nueva persona")
+    @ApiResponses(value = {
+        @ApiResponse(code = 201, message = "Ok"),
+        @ApiResponse(code = 400, message = "Bad Request"),
+        @ApiResponse(code = 409, message = "Conflict")
+    })
+    public Response crear(@ApiParam(name = "form", value = "Formulario persona", required = true) PersonaForm personaForm) {
 
         Personas persona = personaEJB.findByDocumento(personaForm.getNdocumento());
         if (persona != null) {
@@ -66,7 +79,7 @@ public class PersonasResource {
         persona.setApellido(personaForm.getApellido());
         persona.setNombre(personaForm.getNombre());
         persona.setNdocumento(personaForm.getNdocumento());
-        persona.setFnacimiento(Utilidades.stringToDate(personaForm.getFnacimiento()));
+        persona.setFnacimiento(personaForm.getFnacimiento());
         persona.setSexo(personaForm.getSexo());
         persona.setEmail(personaForm.getEmail());
         persona.setTelefono(personaForm.getTelefono());
@@ -84,6 +97,20 @@ public class PersonasResource {
     @Path("/getlista")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
+    @ApiOperation(value = "Retorna un listado de personas")
+    @ApiImplicitParams({
+        @ApiImplicitParam(name = "start", value = "Desplazamiento a partir del primer registro", required = false, dataType = "integer", paramType = "query", defaultValue = "0"),
+        @ApiImplicitParam(name = "size", value = "Cant. de registros a mostrar", required = false, dataType = "integer", paramType = "query", defaultValue = "10"),
+        @ApiImplicitParam(name = "search", value = "Filtrar por apellido", required = false, dataType = "string", paramType = "query"),
+        @ApiImplicitParam(name = "sortBy", value = "Atributo por el cual se desea ordenar", required = false, dataType = "string", paramType = "query"),
+        @ApiImplicitParam(name = "sortOrder", value = "Tipo de ordenamiento", required = false, dataType = "string", paramType = "query")
+    })
+    @ApiResponses(value = {
+        @ApiResponse(code = 200, message = "OK"),
+        @ApiResponse(code = 400, message = "Bad request", response = ErrorMessage.class),
+        @ApiResponse(code = 404, message = "Not Found", response = ErrorMessage.class),
+        @ApiResponse(code = 500, message = "Internal Server Error", response = ErrorMessage.class)
+    })
     public Response findByParams(@Context UriInfo uriInfo) {
 
         // Creamos los objetos 
@@ -95,7 +122,7 @@ public class PersonasResource {
         String sSize = uriInfo.getQueryParameters().getFirst("size");
         String search = uriInfo.getQueryParameters().getFirst("search");
         String sortBy = uriInfo.getQueryParameters().getFirst("sortBy");
-        String sortOrder = uriInfo.getQueryParameters().getFirst("order");
+        String sortOrder = uriInfo.getQueryParameters().getFirst("sortOrder");
         Map<String, Object> map = new HashMap<>();
         map.put("search", search);
 
@@ -121,7 +148,8 @@ public class PersonasResource {
                     .add("fnacimiento", Utilidades.ISO8601(x.getFnacimiento()))
                     .add("sexo", x.getSexo())
                     .add("email", x.getEmail())
-                    .add("telefono", x.getTelefono()));
+                    .add("telefono", x.getTelefono())
+                    .add("imagen", Validacion.defaultValue(x.getImagen(), "S/D")));
         });
 
         // Construimos la respuesta
@@ -134,10 +162,15 @@ public class PersonasResource {
     }
 
     @DELETE
-    @Path("{id}")
+    @Path("/eliminar/{id}")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public Response eliminar(@PathParam("id") int id) {
+    @ApiOperation(value = "Elimina una persona")
+    @ApiResponses(value = {
+        @ApiResponse(code = 200, message = "Ok"),
+        @ApiResponse(code = 404, message = "Not Found")
+    })
+    public Response eliminar(@ApiParam(value = "id de persona", required = true) @PathParam("id") int id) {
         // Buscamos a la persona
         Personas persona = personaEJB.find(id);
 
@@ -162,18 +195,24 @@ public class PersonasResource {
     @Path("/cambiar")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public Response actualizar(PersonaForm personaForm) {
+    @ApiOperation(value = "Actualiza la información de una persona")
+    @ApiResponses(value = {
+        @ApiResponse(code = 201, message = "Ok"),
+        @ApiResponse(code = 400, message = "Bad Request"),
+        @ApiResponse(code = 409, message = "Conflict")
+    })
+    public Response actualizar(@ApiParam(value = "Formulario persona", name = "form", required = true) PersonaForm personaForm) {
         Personas persona = personaEJB.findByDocumento(personaForm.getNdocumento());
 
         if (persona == null) {
             ErrorMessage em = new ErrorMessage(Response.Status.NOT_FOUND,
-                    Response.Status.NOT_FOUND.getStatusCode(), "No se encontro la persona");
+                    Response.Status.NOT_FOUND.getStatusCode(), "No se encontró la persona");
             throw new NotFoundException(em);
         }
         persona.setApellido(Validacion.defaultValue(personaForm.getApellido(), persona.getApellido()));
         persona.setNombre(Validacion.defaultValue(personaForm.getNombre(), persona.getNombre()));
         persona.setNdocumento(Validacion.defaultValue(personaForm.getNdocumento(), persona.getNdocumento()));
-        persona.setFnacimiento(Validacion.defaultValue(Utilidades.stringToDate(personaForm.getFnacimiento()), persona.getFnacimiento()));
+        persona.setFnacimiento(Validacion.defaultValue(personaForm.getFnacimiento(), persona.getFnacimiento()));
         persona.setSexo(Validacion.defaultValue(personaForm.getSexo(), persona.getSexo()));
         persona.setEmail(Validacion.defaultValue(personaForm.getEmail(), persona.getEmail()));
         persona.setTelefono(Validacion.defaultValue(personaForm.getTelefono(), persona.getTelefono()));
@@ -189,5 +228,4 @@ public class PersonasResource {
                                 + " se actualizaron correctamente"));
         return Response.status(Response.Status.OK).entity(job.build()).build();
     }
-
 }

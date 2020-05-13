@@ -1,27 +1,40 @@
 package com.fcastillo.capitulo.rest.modelo;
 
+import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
 import java.util.Date;
+import javax.ws.rs.QueryParam;
 
 /**
  *
  * @author fcastillo
  */
+@ApiModel(value = "PersonaFormModel", description = "descripcion")
 public class PersonaForm {
 
+    @ApiModelProperty(position = 1)
     private int id;
+    @ApiModelProperty(position = 2, required = true)
     private String apellido;
+    @ApiModelProperty(position = 3, required = true)
     private String nombre;
+    @ApiModelProperty(position = 4, required = true)
     private String ndocumento;
-    private String fnacimiento;
+    @ApiModelProperty(position = 5,required = true)
+    private Date fnacimiento;
+    @ApiModelProperty(position = 6,dataType = "integer",allowableValues = "1,2")
     private int sexo;
+    @ApiModelProperty(position = 6)
     private String email;
+    @ApiModelProperty(position = 7)
     private String telefono;
+    @ApiModelProperty(position = 8, dataType = "string")
     private String imagen;
 
     public PersonaForm() {
     }
 
-    public PersonaForm(int id, String apellido, String nombre, String ndocumento, String fnacimiento, int sexo, String email, String telefono, String imagen) {
+    public PersonaForm(int id, String apellido, String nombre, String ndocumento, Date fnacimiento, int sexo, String email, String telefono, String imagen) {
         this.id = id;
         this.apellido = apellido;
         this.nombre = nombre;
@@ -65,11 +78,11 @@ public class PersonaForm {
         this.ndocumento = ndocumento;
     }
 
-    public String getFnacimiento() {
+    public Date getFnacimiento() {
         return fnacimiento;
     }
 
-    public void setFnacimiento(String fnacimiento) {
+    public void setFnacimiento(Date fnacimiento) {
         this.fnacimiento = fnacimiento;
     }
 
